@@ -133,13 +133,29 @@ python main.py
 
 ---
 
-## 👥 Contributors
 
-| Name           | GitHub                                                     |
-| -------------- | ---------------------------------------------------------- |
-| Chetan Gadhiya | [@chetangadhiya5062](https://github.com/chetangadhiya5062) |
-| Vedesh Pandya  | [@VedeshP](https://github.com/VedeshP)                     |
+## 🤝 Contributors
 
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/chetangadhiya5062">
+        <img src="https://github.com/chetangadhiya5062.png" width="100px;" alt=""/>
+        <br />
+        <sub><b>Chetan Gadhiya</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/VedeshP">
+        <img src="https://github.com/VedeshP.png" width="100px;" alt=""/>
+        <br />
+        <sub><b>Vedesh Pandya</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>
+
+---
 ---
 
 ## 📜 License
