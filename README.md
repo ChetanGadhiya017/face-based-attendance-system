@@ -1,4 +1,4 @@
-````markdown
+
 <h1 align="center">👤 Face Recognition Attendance System</h1>
 <p align="center">
   <img src="https://img.shields.io/badge/DBMS-PROJECT-blue.svg?style=for-the-badge">
@@ -41,7 +41,7 @@
 |----------------------|------------------|---------------|
 | ![register](images/register.png) | ![detect](images/detect.png) | ![attendance](images/attendance.png) |
 
-> *(Replace above with your own screenshots in a `images/` folder)*
+<!-- > *(Replace above with your own screenshots in a `images/` folder)* -->
 
 ---
 
