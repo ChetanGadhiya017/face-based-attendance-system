@@ -1,7 +1,7 @@
 {% extends "base.html" %}{% from "_macros.html" import csrf with context %}
 {% block title %}Live · {{ s.course.code }}{% endblock %}
-{% block heading %}<span class="dot live"></span> {{ s.course.code }} · {{ s.course.name }}{% endblock %}
-{% block subheading %}Started {{ s.started_at.strftime('%H:%M') }}{% if s.topic %} · {{ s.topic }}{% endif %} · arrivals after {{ config.LATE_AFTER_MINUTES }} min are marked late{% endblock %}
+{% block heading %}{{ s.course.code }} · {{ s.course.name }}{% endblock %}
+{% block subheading %}<span class="badge err"><span class="dot live"></span> LIVE</span> Started {{ s.started_at.strftime('%H:%M') }}{% if s.topic %} · {{ s.topic }}{% endif %} · arrivals after {{ config.LATE_AFTER_MINUTES }} min are marked late{% endblock %}
 {% block actions %}
 <a class="btn" href="{{ url_for('main.session_csv', sid=s.id) }}">⬇ CSV</a>
 <form class="inline" method="post" action="{{ url_for('main.session_close', sid=s.id) }}" data-confirm="Close the session? Everyone not marked yet will be recorded as absent.">{{ csrf() }}<button class="btn primary">■ Close session</button></form>

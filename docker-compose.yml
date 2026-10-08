@@ -1,0 +1,26 @@
+services:
+  web:
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-change-me}
+      DATABASE_URL: mysql+pymysql://attendance:attendance@db:3306/face_attendance
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes: ["instance:/app/instance"]
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: face_attendance
+      MYSQL_USER: attendance
+      MYSQL_PASSWORD: attendance
+      MYSQL_ROOT_PASSWORD: root
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      retries: 20
+    volumes: ["mysql:/var/lib/mysql"]
+volumes:
+  instance:
+  mysql:

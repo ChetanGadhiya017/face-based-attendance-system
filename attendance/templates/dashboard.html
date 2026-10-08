@@ -6,7 +6,7 @@
 {% block content %}
 {% if open_sessions %}
 <div class="card" style="border-color:var(--brand);margin-bottom:16px">
-  <h3><span class="dot live"></span> Live now</h3>
+  <h3><span class="badge err"><span class="dot live"></span> LIVE NOW</span></h3>
   <ul class="list">{% for s in open_sessions %}
     <li><div><b>{{ s.course.code }}</b> · {{ s.course.name }} <span class="muted small">started {{ s.started_at.strftime('%H:%M') }}</span></div>
       <a class="btn sm primary" href="{{ url_for('main.session_view', sid=s.id) }}">Open camera</a></li>{% endfor %}</ul>
