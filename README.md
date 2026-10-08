@@ -1,175 +1,147 @@
+<div align="center">
 
-<h1 align="center">👤 Face Recognition Attendance System</h1>
-<p align="center">
-  <img src="https://img.shields.io/badge/DBMS-PROJECT-blue.svg?style=for-the-badge">
-  <img src="https://img.shields.io/github/stars/chetangadhiya5062/Fork_dbms_project_face_attendance?style=for-the-badge">
-  <img src="https://img.shields.io/github/forks/chetangadhiya5062/Fork_dbms_project_face_attendance?style=for-the-badge">
-</p>
+# 👤 Face Recognition Attendance System
 
-<p align="center">📸 A smart Face Recognition system to automate student attendance using Python, OpenCV, Tkinter, and MySQL. ✨</p>
+**Students look at a webcam and they're marked present: no roll call, no proxy sign-ins.**
 
----
+A DBMS course project. It pairs a normalised university schema (schools → programs → divisions → groups → students, courses, enrollments) with real-time face recognition that writes attendance straight to MySQL.
 
-## ✨ Features
+![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
+![OpenCV](https://img.shields.io/badge/OpenCV-5C3EE8?logo=opencv&logoColor=white)
+![face_recognition](https://img.shields.io/badge/face__recognition-dlib-orange)
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?logo=mysql&logoColor=white)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2-D71F00)
+![Flask](https://img.shields.io/badge/Flask-API-000000?logo=flask)
 
-- 🎥 Real-time face detection and recognition with OpenCV
-- 📝 Auto logs attendance with name, date & time
-- 👤 Student registration with photo capture
-- 📚 Trains face data using LBPH algorithm
-- 📊 Attendance records saved in MySQL
-- 🖼️ GUI powered by Tkinter
-- 📤 Export attendance to CSV format
+</div>
 
 ---
 
-## 🛠️ Tech Stack
+## ✨ What it does
 
-| Tool        | Purpose                          |
-|-------------|----------------------------------|
-| `Python`    | Core programming language        |
-| `OpenCV`    | Image processing & face detection|
-| `Tkinter`   | Graphical User Interface (GUI)   |
-| `MySQL`     | Backend database                 |
-| `PIL`       | Image handling                   |
-| `CSV`       | Export reports                   |
+- 🎥 **Live recognition**: reads the webcam, matches faces against every student photo in the database with `face_recognition` (dlib, 128-d embeddings) and draws the name on screen.
+- 🗄️ **Writes to MySQL**: marks `PRESENT` in `ATTENDANCE` for the given course and date. `INSERT IGNORE` keeps one record per student/course/day.
+- 🏫 **Full university schema**: 10 related tables with keys and constraints, plus realistic seed scripts for several departments.
+- 🖥️ **Desktop prototype**: a CustomTkinter app (`attendance_system/`) with a live camera panel, start/stop and today's list, backed by SQLite.
+- 🔐 **Auth API**: Flask + JWT endpoints to register and log in students (`app.py`).
 
 ---
 
-## 📷 UI Preview & Demo
+## 🗄️ Database design
 
-| 👨‍🎓 Register Student | 📸 Face Detection | 🧾 Attendance |
-|----------------------|------------------|---------------|
-| ![register](images/register.png) | ![detect](images/detect.png) | ![attendance](images/attendance.png) |
+```mermaid
+erDiagram
+    SCHOOL ||--o{ PROGRAM : offers
+    SCHOOL ||--o{ DEPARTMENT : houses
+    PROGRAM ||--o{ DIVISION : contains
+    DIVISION ||--o{ STUDENT_GROUP : organizes
+    DEPARTMENT ||--o{ PROFESSOR : employs
+    DEPARTMENT ||--o{ COURSE : offers
+    PROFESSOR ||--o{ COURSE : teaches
+    STUDENT }o--|| DIVISION : "belongs to"
+    STUDENT }o--|| STUDENT_GROUP : "belongs to"
+    STUDENT ||--o{ ENROLLMENT : "enrolls in"
+    COURSE ||--o{ ENROLLMENT : has
+    STUDENT ||--o{ ATTENDANCE : has
+    COURSE ||--o{ ATTENDANCE : records
+    STUDENT {
+        varchar ID PK
+        varchar NAME
+        varchar CONTACT_NO
+        varchar EMAIL
+        varchar DIVISION_ID FK
+        varchar GROUP_ID FK
+        text IMAGE_PATH
+    }
+    ATTENDANCE {
+        varchar STUDENT_ID FK
+        varchar COURSE_ID FK
+        date DATE
+        varchar STATUS
+    }
+```
 
-<!-- > *(Replace above with your own screenshots in a `images/` folder)* -->
+The full ER diagram with every attribute is in [`ER Diagram.png`](ER%20Diagram.png). The schema is in [`V1_till structure/schema structure2.sql`](V1_till%20structure/schema%20structure2.sql), and example reports (attendance %, defaulters, per-course summaries) are in [`sample_queries.sql`](V1_till%20structure/sample_queries.sql).
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Getting started
 
-### 🔁 Clone the Repository
+### 1. Install
 
 ```bash
-git clone https://github.com/chetangadhiya5062/Fork_dbms_project_face_attendance.git
-cd Fork_dbms_project_face_attendance
-````
-
-### 📦 Install Dependencies
-
-```bash
+git clone https://github.com/ChetanGadhiya017/face-based-attendance-system.git
+cd face-based-attendance-system
+python -m venv .venv && .venv\Scripts\activate      # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-> If `requirements.txt` not found:
+> `face_recognition` depends on **dlib**. On Windows, install [CMake](https://cmake.org/download/) and the *Desktop development with C++* workload of Visual Studio Build Tools first.
 
-```bash
-pip install opencv-python pillow mysql-connector-python
-```
-
-### 🛠️ Set Up MySQL
-
-1. Login to MySQL:
-
-```bash
-mysql -u root -p
-```
-
-2. Create Database:
+### 2. Create the database
 
 ```sql
-CREATE DATABASE face_recognition;
+CREATE DATABASE attendance_v1;
+USE attendance_v1;
+SOURCE "V1_till structure/schema structure2.sql";
+-- then the seed files: school.sql, program.sql, department.sql, division.sql, group.sql,
+-- insert_students.sql, ins_course.sql, ins_enroll_check.sql …
 ```
 
-3. Update credentials in `database.py` as needed.
+Make sure each student's `IMAGE_PATH` points to a clear, front-facing photo.
 
----
-
-### ▶️ Run the App
+### 3. Configure
 
 ```bash
-python main.py
+cp .env.example .env     # set ATTENDANCE_DATABASE_URL (and DB_* / JWT_SECRET_KEY for app.py)
+```
+
+### 4. Take attendance
+
+```bash
+python face.py 20CP210P                 # today's attendance for course 20CP210P
+python face.py 20CP210P --date 2025-04-25
+```
+
+Press **q** to stop.
+
+### Optional
+
+```bash
+python attendance_system/main.py        # desktop prototype (SQLite, photos in attendance_system/images/)
+python app.py                           # auth API: POST /register, POST /login, GET /student (JWT)
 ```
 
 ---
 
-## 🧠 Modules Overview
-
-| File                  | Purpose                                 |
-| --------------------- | --------------------------------------- |
-| `main.py`             | Main GUI launcher                       |
-| `student.py`          | Capture & register student faces        |
-| `train.py`            | Train model using LBPH face recognizer  |
-| `face_recognition.py` | Real-time face recognition & attendance |
-| `attendance.py`       | Export attendance to CSV                |
-| `database.py`         | Connects to MySQL                       |
-
----
-
-## 🗂️ Folder Structure
+## 🗂️ Project structure
 
 ```
-.
-├── attendance/         # CSV logs
-├── dataset/            # Captured face images
-├── trainer/            # Trained model
-├── icons/              # App icons
-├── images/             # Screenshots for README
-├── main.py
-├── student.py
-├── face_recognition.py
-├── train.py
-└── database.py
+├── face.py                     # webcam recognition → MySQL attendance (main entry point)
+├── app.py                      # Flask + JWT student auth API
+├── attendance_system/          # CustomTkinter desktop prototype (SQLite) and earlier iterations
+├── V1_till structure/          # MySQL schema, seed data, sample queries
+├── ER Diagram*.png, *.drawio, ermodelv1.mwb   # ER models (draw.io / MySQL Workbench)
+├── requirements.txt
+└── .env.example
 ```
 
 ---
 
-## 🔮 Future Improvements
+## 🔮 Future work
 
-* [ ] Add Face Mask Detection
-* [ ] Improve UI design with custom themes
-* [ ] Implement Email/SMS alerts for absentee
-* [ ] Dockerize for easy deployment
-* [ ] Enable admin login system
+- Timetable-aware sessions: attendance is only accepted during the scheduled lecture
+- Instant summary to the faculty member after each lecture
+- Liveness detection so a printed photo can't be used
+- Web dashboard for students, faculty and admins
 
 ---
-
 
 ## 🤝 Contributors
 
 <table>
   <tr>
-    <td align="center">
-      <a href="https://github.com/chetangadhiya5062">
-        <img src="https://github.com/chetangadhiya5062.png" width="100px;" alt=""/>
-        <br />
-        <sub><b>Chetan Gadhiya</b></sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/VedeshP">
-        <img src="https://github.com/VedeshP.png" width="100px;" alt=""/>
-        <br />
-        <sub><b>Vedesh Pandya</b></sub>
-      </a>
-    </td>
+    <td align="center"><a href="https://github.com/ChetanGadhiya017"><img src="https://github.com/ChetanGadhiya017.png" width="90" alt=""/><br/><sub><b>Chetan Gadhiya</b></sub></a></td>
+    <td align="center"><a href="https://github.com/VedeshP"><img src="https://github.com/VedeshP.png" width="90" alt=""/><br/><sub><b>Vedesh Pandya</b></sub></a></td>
   </tr>
 </table>
-
----
----
-
-## 📜 License
-
-Licensed under the [MIT License](LICENSE).
-
----
-
-## 🌟 Show Some Love
-
-If you like this project, consider giving it a ⭐️
-It helps the repository grow and shows appreciation! 🙌
-
-<p align="center">
-  <img src="https://forthebadge.com/images/badges/made-with-python.svg">
-</p>
-```
