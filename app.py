@@ -4,17 +4,25 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 import pymysql
 from sqlalchemy import text  # ✅ Correct import
+import os
 from urllib.parse import quote_plus
 
+from dotenv import load_dotenv
+
+load_dotenv()
 pymysql.install_as_MySQLdb()
 
 app = Flask(__name__)
 
-# Database Configuration (Ensure special characters in the password are encoded)
-password = quote_plus("rajipo@#1711")
-app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://root:{password}@localhost/fr_attendance"
+# Database configuration comes from environment variables / .env (see .env.example).
+# Special characters in the password are URL-encoded.
+DB_USER = os.getenv("DB_USER", "root")
+DB_PASSWORD = quote_plus(os.getenv("DB_PASSWORD", ""))
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_NAME = os.getenv("DB_NAME", "fr_attendance")
+app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = 'supersecretkey'  # Change this in production
+app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY", "dev-only-change-me")
 
 # Initialize extensions
 db = SQLAlchemy(app)
@@ -77,4 +85,4 @@ with app.app_context():
         print(f"❌ Database connection failed: {e}")
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=os.getenv("FLASK_DEBUG") == "1")

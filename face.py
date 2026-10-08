@@ -10,7 +10,15 @@ import argparse # For command-line arguments
 # face rec lib in python 3.12.4 - global interpreter
 
 # --- Database Configuration ---
-DATABASE_URL = "mysql+pymysql://root:12345@localhost:3306/attendance_v1"
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    pass
+
+# Set ATTENDANCE_DATABASE_URL in your environment / .env (see .env.example)
+DATABASE_URL = os.getenv("ATTENDANCE_DATABASE_URL", "mysql+pymysql://root:password@localhost:3306/attendance_v1")
 # Reminder: Use secure credential management in production!
 
 # --- Table and Column Names (Adjust if needed) ---
