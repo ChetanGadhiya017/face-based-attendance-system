@@ -2,7 +2,7 @@ import cv2
 import face_recognition
 import numpy as np
 from sqlalchemy import create_engine, text
-from datetime import date, timedelta
+from datetime import date
 import sys
 import os
 import argparse # For command-line arguments
@@ -138,20 +138,17 @@ def mark_attendance(engine, student_id, course_id, attendance_date):
 # --- Main Application Logic ---
 if __name__ == "__main__":
 
-    # --- Argument Parser for Course ID ---
-    # parser = argparse.ArgumentParser(description="Facial Recognition Attendance System")
-    # parser.add_argument("course_id", help="The Course ID (e.g., CS101) for which attendance is being taken.")
-    # args = parser.parse_args()
-    # current_course_id = args.course_id
-    
-    # current_course_id = "20CP206T"
-    # current_course_id = "20CP207P"
-    # current_course_id = "20CP207T"
-    # current_course_id = "20CP208P"
-    # current_course_id = "20CP208T"
-    # current_course_id = "20CP209P"
-    # current_course_id = "20CP209T"
-    current_course_id = "20CP210P"
+    # --- Command-line arguments ---
+    parser = argparse.ArgumentParser(description="Facial Recognition Attendance System")
+    parser.add_argument("course_id", help="Course ID to mark attendance for, e.g. 20CP210P")
+    parser.add_argument(
+        "--date",
+        type=date.fromisoformat,
+        default=date.today(),
+        help="Attendance date as YYYY-MM-DD (default: today)",
+    )
+    args = parser.parse_args()
+    current_course_id = args.course_id
 
     print(f"Starting attendance system for Course ID: {current_course_id}")
 
@@ -175,9 +172,8 @@ if __name__ == "__main__":
         sys.exit("Error: Could not open webcam.")
     print("Webcam opened successfully.")
 
-    # --- Get Today's Date ---
-    # today_date = date.today()
-    today_date = date.today() - timedelta(days=1)
+    # --- Attendance date (today unless --date is given) ---
+    today_date = args.date
     print(f"Attendance Date: {today_date}")
 
     # --- Keep track of students marked present in this session ---
