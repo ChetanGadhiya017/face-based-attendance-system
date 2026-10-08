@@ -61,7 +61,7 @@ erDiagram
     }
 ```
 
-The full ER diagram with every attribute is in [`ER Diagram.png`](ER%20Diagram.png). The schema is in [`V1_till structure/schema structure2.sql`](V1_till%20structure/schema%20structure2.sql), and example reports (attendance %, defaulters, per-course summaries) are in [`sample_queries.sql`](V1_till%20structure/sample_queries.sql).
+The full ER diagram with every attribute is in [`ER Diagram.png`](ER%20Diagram.png). The schema is in [`V1_till structure/schema structure2.sql`](V1_till%20structure/schema%20structure2.sql), and example queries (attendance list per course and date, a student’s record, absentees) are in [`sample_queries.sql`](V1_till%20structure/sample_queries.sql).
 
 ---
 
