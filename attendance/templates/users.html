@@ -1,0 +1,22 @@
+{% extends "base.html" %}{% from "_macros.html" import csrf with context %}
+{% block title %}Users{% endblock %}{% block heading %}Users{% endblock %}{% block subheading %}Who can sign in{% endblock %}
+{% block content %}
+<div class="grid g-main">
+  <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Last sign-in</th><th></th></tr></thead><tbody>
+  {% for u in users %}<tr><td><div class="person"><span class="avatar">{{ u.initials }}</span><b>{{ u.name }}</b></div></td><td class="small">{{ u.email }}</td>
+    <td><span class="badge {{ 'brand' if u.role == 'admin' else '' }}">{{ u.role }}</span>{% if u.student %} <span class="muted small mono">{{ u.student.roll_no }}</span>{% endif %}</td>
+    <td class="small muted">{{ u.last_login.strftime('%d %b %H:%M') if u.last_login else 'never' }}</td>
+    <td class="right">{% if u.id != current_user.id %}<form class="inline" method="post" action="{{ url_for('main.user_toggle', uid=u.id) }}">{{ csrf() }}<button class="btn sm {{ 'danger' if u.is_active_flag else 'ok' }}">{{ 'Deactivate' if u.is_active_flag else 'Activate' }}</button></form>{% else %}<span class="muted small">you</span>{% endif %}</td></tr>
+  {% endfor %}</tbody></table></div>
+  <form method="post" class="card" style="display:flex;flex-direction:column;gap:12px">{{ csrf() }}
+    <h3>Add a user</h3>
+    <label class="f">Name<input name="name" required></label>
+    <label class="f">Email<input type="email" name="email" required></label>
+    <label class="f">Role<select name="role" id="role"><option value="faculty">Faculty</option><option value="admin">Admin</option><option value="student">Student</option></select></label>
+    <label class="f" id="roll" hidden>Student roll number<input name="roll_no" placeholder="23BCP001"></label>
+    <label class="f">Temporary password <small>min 8 characters</small><input type="password" name="password" minlength="8" required autocomplete="new-password"></label>
+    <button class="btn primary">Create account</button>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}<script>const r = document.getElementById('role'); r.addEventListener('change', () => document.getElementById('roll').hidden = r.value !== 'student');</script>{% endblock %}

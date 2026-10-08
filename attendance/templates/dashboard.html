@@ -1,0 +1,75 @@
+{% extends "base.html" %}{% from "_macros.html" import meter, person with context %}
+{% block title %}Dashboard{% endblock %}
+{% block heading %}Good {{ 'morning' if now.hour < 12 else 'afternoon' if now.hour < 17 else 'evening' }}, {{ current_user.name.split()[0] if current_user.role == 'admin' else current_user.name }}{% endblock %}
+{% block subheading %}{{ now.strftime('%A, %d %B %Y') }}{% endblock %}
+{% block actions %}<a class="btn primary" href="{{ url_for('main.courses') }}">▶ Start a session</a>{% endblock %}
+{% block content %}
+{% if open_sessions %}
+<div class="card" style="border-color:var(--brand);margin-bottom:16px">
+  <h3><span class="dot live"></span> Live now</h3>
+  <ul class="list">{% for s in open_sessions %}
+    <li><div><b>{{ s.course.code }}</b> · {{ s.course.name }} <span class="muted small">started {{ s.started_at.strftime('%H:%M') }}</span></div>
+      <a class="btn sm primary" href="{{ url_for('main.session_view', sid=s.id) }}">Open camera</a></li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+<div class="kpis">
+  <div class="kpi"><div class="k">Students</div><div class="v">{{ kpis.students }}</div><div class="h">in {{ kpis.courses }} course{{ 's' if kpis.courses != 1 }}</div></div>
+  <div class="kpi ok"><div class="k">Average attendance</div><div class="v">{{ kpis.average|pct }}</div><div class="h">across all enrolments</div></div>
+  <div class="kpi warn"><div class="k">Below {{ min_percent }}%</div><div class="v">{{ kpis.below }}</div><div class="h">students need attention</div></div>
+  <div class="kpi"><div class="k">Sessions held</div><div class="v">{{ kpis.sessions }}</div><div class="h">{{ methods.get('face', 0) }} face check-ins</div></div>
+  <div class="kpi"><div class="k">No face enrolled</div><div class="v">{{ kpis.no_face }}</div><div class="h"><a href="{{ url_for('main.students', face='no') }}">enrol them →</a></div></div>
+</div>
+
+<div class="grid g-main">
+  <div class="card">
+    <h3>Attendance trend · last 3 weeks</h3>
+    {% if trend.labels %}<div class="chart-box"><canvas id="trend"></canvas></div>
+    {% else %}<div class="empty">No completed sessions yet.</div>{% endif %}
+  </div>
+  <div class="card">
+    <h3>How students were marked</h3>
+    {% if methods %}<div class="chart-box" style="height:220px"><canvas id="methods"></canvas></div>
+    {% else %}<div class="empty">Nothing yet.</div>{% endif %}
+  </div>
+</div>
+
+<div class="grid g2" style="margin-top:16px">
+  <div class="card">
+    <h3>Courses</h3>
+    {% if courses %}<ul class="list">{% for c in courses %}
+      <li><div style="min-width:0"><a href="{{ url_for('main.course_detail', cid=c.id) }}"><b>{{ c.code }}</b></a> · {{ c.name }}
+        <div class="muted small">{{ c.enrollments|length }} students · {{ c.faculty.name if c.faculty else 'No faculty' }}</div></div>
+        <div style="width:160px">{{ meter(course_avg.get(c.id)) }}</div></li>{% endfor %}</ul>
+    {% else %}<div class="empty"><div class="big">📚</div>No courses yet.{% if current_user.role == 'admin' %} <a href="{{ url_for('main.course_new') }}">Create one</a>{% endif %}</div>{% endif %}
+  </div>
+  <div class="card">
+    <h3>Below {{ min_percent }}% attendance</h3>
+    {% if defaulters %}<ul class="list">{% for d in defaulters %}
+      <li>{{ person(d.student, d.student.roll_no ~ ' · ' ~ d.course.code) }}<div style="width:150px">{{ meter(d.percent) }}</div></li>{% endfor %}</ul>
+    <a class="small" href="{{ url_for('main.reports', filter='below') }}">See full defaulter list →</a>
+    {% else %}<div class="empty"><div class="big">🎉</div>Everyone is above {{ min_percent }}%.</div>{% endif %}
+  </div>
+</div>
+
+<div class="card" style="margin-top:16px">
+  <h3>Recent sessions</h3>
+  {% if recent %}<div class="table-wrap"><table><thead><tr><th>Course</th><th>Date</th><th>Topic</th><th>Present</th><th>Late</th><th>Absent</th><th>Attendance</th></tr></thead><tbody>
+  {% for s in recent %}{% set sm = s.summary() %}
+    <tr><td><a href="{{ url_for('main.session_view', sid=s.id) }}"><b>{{ s.course.code }}</b></a></td><td class="nowrap">{{ s.date.strftime('%d %b') }} · {{ s.started_at.strftime('%H:%M') }}</td>
+    <td>{{ s.topic or '–' }}</td><td>{{ sm.present }}</td><td>{{ sm.late }}</td><td>{{ sm.absent }}</td><td style="width:180px">{{ meter(sm.percent) }}</td></tr>
+  {% endfor %}</tbody></table></div>
+  {% else %}<div class="empty">No sessions yet.</div>{% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script>
+  const trend = {{ trend|tojson }}, methods = {{ methods|tojson }};
+  drawCharts(() => {
+    if (trend.labels.length) lineChart('trend', trend.labels, trend.values, '% attended', {{ min_percent }});
+    if (Object.keys(methods).length) doughnut('methods', Object.keys(methods).map((m) => ({face: 'Face recognition', manual: 'Manual', auto: 'Auto'}[m] || m)), Object.values(methods));
+  });
+</script>
+{% endblock %}

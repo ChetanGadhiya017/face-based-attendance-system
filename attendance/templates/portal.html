@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% from "_macros.html" import meter, status with context %}
+{% block title %}My attendance{% endblock %}
+{% block heading %}My attendance{% endblock %}
+{% block subheading %}{% if st %}{{ st.name }} · <span class="mono">{{ st.roll_no }}</span>{% endif %}{% endblock %}
+{% block content %}
+{% if st %}
+{% set att = stats|selectattr('percent')|map(attribute='percent')|list %}
+<div class="kpis">
+  <div class="kpi {{ 'ok' if (att|sum / att|length if att else 0) >= min_percent else 'warn' }}"><div class="k">Overall</div><div class="v">{{ ((att|sum / att|length) if att else None)|pct }}</div><div class="h">minimum required {{ min_percent }}%</div></div>
+  <div class="kpi"><div class="k">Courses</div><div class="v">{{ stats|length }}</div></div>
+  <div class="kpi"><div class="k">Face enrolled</div><div class="v">{{ '✓' if st.faces else '✕' }}</div><div class="h">{{ 'ready for check-in' if st.faces else 'ask your faculty' }}</div></div>
+</div>
+<div class="grid g2">
+  {% for s in stats %}{% set c = courses[s.course_id] %}
+  <div class="card"><div style="display:flex;justify-content:space-between;gap:10px"><div><span class="badge brand mono">{{ c.code }}</span><h2 style="margin:8px 0 4px">{{ c.name }}</h2>
+    <div class="muted small">{{ s.attended }} of {{ s.held }} sessions · {{ s.late }} late · {{ c.faculty.name if c.faculty else '' }}</div></div></div>
+    <div style="margin-top:12px">{{ meter(s.percent) }}</div>
+    {% if s.percent is not none and s.percent < min_percent %}<p class="small" style="color:var(--warn);margin-bottom:0">⚠ Below {{ min_percent }}%. Attend the next sessions to recover.</p>{% endif %}
+  </div>{% endfor %}
+</div>
+<div class="card" style="margin-top:16px"><h3>Recent</h3>
+  {% if recent %}<ul class="list">{% for r in recent %}<li><div><b>{{ r.session.course.code }}</b> · {{ r.session.date.strftime('%a %d %b') }}{% if r.session.topic %} <span class="muted small">{{ r.session.topic }}</span>{% endif %}</div>{{ status(r.status) }}</li>{% endfor %}</ul>
+  {% else %}<div class="empty">No attendance yet.</div>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

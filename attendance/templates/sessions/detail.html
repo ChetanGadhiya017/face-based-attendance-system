@@ -1,0 +1,30 @@
+{% extends "base.html" %}{% from "_macros.html" import person, status, csrf with context %}
+{% block title %}{{ s.course.code }} · {{ s.date }}{% endblock %}
+{% set sm = s.summary() %}
+{% block heading %}{{ s.course.code }} · {{ s.date.strftime('%A %d %B %Y') }}{% endblock %}
+{% block subheading %}{{ s.started_at.strftime('%H:%M') }}–{{ s.ended_at.strftime('%H:%M') }}{% if s.topic %} · {{ s.topic }}{% endif %} · {{ sm.percent }}% attended{% endblock %}
+{% block actions %}
+<a class="btn" href="{{ url_for('main.course_detail', cid=s.course_id) }}">← {{ s.course.code }}</a>
+<a class="btn" href="{{ url_for('main.session_csv', sid=s.id) }}">⬇ CSV</a>
+<form class="inline" method="post" action="{{ url_for('main.session_delete', sid=s.id) }}" data-confirm="Delete this session and its attendance records?">{{ csrf() }}<button class="btn danger">Delete</button></form>
+{% endblock %}
+{% block content %}
+<div class="kpis">
+  <div class="kpi ok"><div class="k">Present</div><div class="v">{{ sm.present }}</div></div>
+  <div class="kpi warn"><div class="k">Late</div><div class="v">{{ sm.late }}</div></div>
+  <div class="kpi"><div class="k">Absent</div><div class="v" style="color:var(--err)">{{ sm.absent }}</div></div>
+  <div class="kpi"><div class="k">Attendance</div><div class="v">{{ sm.percent }}%</div><div class="h">of {{ sm.total }} enrolled</div></div>
+</div>
+<div class="table-wrap"><table>
+  <thead><tr><th>Student</th><th>Status</th><th>How</th><th>Time</th><th>Confidence</th><th class="right">Correct</th></tr></thead>
+  <tbody>{% for st in s.course.students %}{% set r = recs.get(st.id) %}
+    <tr id="st-{{ st.id }}"><td>{{ person(st) }}</td><td>{{ status(r.status if r else None) }}</td>
+    <td class="small">{{ {'face': '🙂 Face', 'manual': '✋ Manual', 'auto': '⚙ Auto (closed)'}.get(r.method, '–') if r else '–' }}</td>
+    <td class="small nowrap">{{ r.marked_at.strftime('%H:%M:%S') if r and r.status != 'absent' else '–' }}</td>
+    <td class="small">{{ '%.2f'|format(r.confidence) if r and r.confidence else '–' }}</td>
+    <td class="right nowrap">{% for opt in ('present', 'late', 'absent') %}{% if not r or r.status != opt %}
+      <form class="inline" method="post" action="{{ url_for('main.session_mark', sid=s.id, student_id=st.id) }}">{{ csrf() }}<input type="hidden" name="status" value="{{ opt }}"><button class="btn sm ghost" title="Mark {{ opt }}">{{ opt[0]|upper }}</button></form>
+    {% endif %}{% endfor %}</td></tr>
+  {% endfor %}</tbody>
+</table></div>
+{% endblock %}

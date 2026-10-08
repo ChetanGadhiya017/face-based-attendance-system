@@ -1,0 +1,19 @@
+{% macro meter(p) -%}
+{% if p is none %}<span class="muted">–</span>{% else %}
+<div class="pct"><div class="meter {{ 'err' if p < min_percent - 15 else 'warn' if p < min_percent }}" style="flex:1"><i style="width:{{ p }}%"></i></div><b>{{ p|round|int }}%</b></div>
+{% endif %}
+{%- endmacro %}
+
+{% macro status(s) -%}
+{% if s %}<span class="badge {{ s }}">{{ {'present': '✓ Present', 'late': '⏱ Late', 'absent': '✕ Absent'}[s] }}</span>{% else %}<span class="badge">Unmarked</span>{% endif %}
+{%- endmacro %}
+
+{% macro person(st, sub=None, link=True) -%}
+<div class="person">
+  {% if st.faces %}<img src="{{ thumb(st.faces[0]) }}" alt="">{% else %}<span class="avatar">{{ st.initials }}</span>{% endif %}
+  <div>{% if link %}<a href="{{ url_for('main.student_detail', sid=st.id) }}"><b>{{ st.name }}</b></a>{% else %}<b>{{ st.name }}</b>{% endif %}
+  <div class="muted small mono">{{ sub or st.roll_no }}</div></div>
+</div>
+{%- endmacro %}
+
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}

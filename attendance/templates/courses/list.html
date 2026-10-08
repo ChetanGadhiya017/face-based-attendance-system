@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% from "_macros.html" import meter, csrf with context %}
+{% block title %}Courses{% endblock %}{% block heading %}Courses &amp; sessions{% endblock %}
+{% block subheading %}Pick a course to take attendance{% endblock %}
+{% block actions %}{% if current_user.role == 'admin' %}<a class="btn primary" href="{{ url_for('main.course_new') }}">＋ New course</a>{% endif %}{% endblock %}
+{% block content %}
+{% if courses %}
+<div class="grid g3">
+{% for c in courses %}{% set live = c.sessions|selectattr('ended_at', 'none')|list %}
+  <div class="card" style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;justify-content:space-between;gap:8px">
+      <div><span class="badge brand mono">{{ c.code }}</span>{% if live %} <span class="badge err"><span class="dot live"></span> Live</span>{% endif %}
+      <h2 style="margin:8px 0 2px"><a href="{{ url_for('main.course_detail', cid=c.id) }}" style="color:inherit">{{ c.name }}</a></h2>
+      <div class="muted small">{{ c.faculty.name if c.faculty else 'No faculty assigned' }} · {{ c.enrollments|length }} students · {{ c.sessions|length }} sessions</div></div>
+    </div>
+    {{ meter(course_avg.get(c.id)) }}
+    <div class="actions" style="margin-top:auto">
+      {% if live %}<a class="btn primary" href="{{ url_for('main.session_view', sid=live[0].id) }}">Resume live session</a>
+      {% else %}<form method="post" action="{{ url_for('main.session_start', cid=c.id) }}" style="display:flex;gap:6px;flex:1">{{ csrf() }}
+        <input name="topic" placeholder="Topic (optional)" maxlength="200"><button class="btn primary">▶ Start</button></form>{% endif %}
+      <a class="btn" href="{{ url_for('main.course_detail', cid=c.id) }}">Details</a>
+    </div>
+  </div>
+{% endfor %}
+</div>
+{% else %}<div class="card empty"><div class="big">📚</div>{% if current_user.role == 'admin' %}No courses yet. <a href="{{ url_for('main.course_new') }}">Create the first one</a>.{% else %}No courses are assigned to you yet.{% endif %}</div>{% endif %}
+{% endblock %}

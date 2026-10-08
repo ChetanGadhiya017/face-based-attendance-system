@@ -1,0 +1,52 @@
+{% extends "base.html" %}{% from "_macros.html" import meter, person, csrf with context %}
+{% block title %}{{ c.code }}{% endblock %}
+{% block heading %}{{ c.code }} · {{ c.name }}{% endblock %}
+{% block subheading %}{{ c.faculty.name if c.faculty else 'No faculty' }} · {{ c.enrollments|length }} students · {{ c.sessions|length }} sessions{% endblock %}
+{% block actions %}
+<a class="btn" href="{{ url_for('main.report_csv', cid=c.id) }}">⬇ CSV report</a>
+{% if current_user.role == 'admin' %}<a class="btn" href="{{ url_for('main.course_edit', cid=c.id) }}">✎ Edit</a>
+<form class="inline" method="post" action="{{ url_for('main.course_delete', cid=c.id) }}" data-confirm="Delete {{ c.code }} with all its sessions and records?">{{ csrf() }}<button class="btn danger">Delete</button></form>{% endif %}
+{% if open_session %}<a class="btn primary" href="{{ url_for('main.session_view', sid=open_session.id) }}"><span class="dot live"></span> Resume live session</a>
+{% else %}<form class="inline" method="post" action="{{ url_for('main.session_start', cid=c.id) }}" style="display:flex;gap:6px">{{ csrf() }}<input name="topic" placeholder="Topic (optional)" style="width:180px"><button class="btn primary">▶ Start session</button></form>{% endif %}
+{% endblock %}
+{% block content %}
+<div class="grid g-main">
+  <div class="card">
+    <h3>Roster</h3>
+    {% if c.enrollments %}<div class="table-wrap"><table><thead><tr><th>Student</th><th>Face</th><th>Held</th><th>Attended</th><th style="width:200px">Attendance</th><th></th></tr></thead><tbody>
+    {% for st in c.students %}{% set s = stats.get(st.id, {}) %}
+      <tr><td>{{ person(st) }}</td><td>{% if st.faces %}<span class="badge ok">✓</span>{% else %}<span class="badge warn">none</span>{% endif %}</td>
+      <td>{{ s.get('held', 0) }}</td><td>{{ s.get('attended', 0) }}</td><td>{{ meter(s.get('percent')) }}</td>
+      <td class="right"><form class="inline" method="post" action="{{ url_for('main.course_unenroll', cid=c.id, sid=st.id) }}" data-confirm="Remove {{ st.name }} from {{ c.code }}?">{{ csrf() }}<button class="btn sm ghost" title="Remove from course">✕</button></form></td></tr>
+    {% endfor %}</tbody></table></div>
+    {% else %}<div class="empty"><div class="big">👥</div>No students enrolled yet. Use the panel on the right.</div>{% endif %}
+  </div>
+  <div>
+    <div class="card">
+      <h3>Enrol students</h3>
+      <form method="post" action="{{ url_for('main.course_enroll', cid=c.id) }}" style="display:flex;flex-direction:column;gap:10px">{{ csrf() }}
+        <label class="f">Add
+          <select name="mode" id="enroll-mode">
+            <option value="division">a whole division</option><option value="department">a whole department</option>
+            <option value="rolls">specific roll numbers</option><option value="all">every student</option></select></label>
+        <select name="division" data-for="division">{% for d in divisions %}<option>{{ d }}</option>{% endfor %}</select>
+        <select name="department_id" data-for="department" hidden>{% for d in depts %}<option value="{{ d.id }}">{{ d.code }}</option>{% endfor %}</select>
+        <textarea name="rolls" data-for="rolls" rows="3" placeholder="23BCP001, 23BCP002 …" hidden></textarea>
+        <button class="btn primary">Enrol</button>
+      </form>
+    </div>
+    <div class="card">
+      <h3>Sessions</h3>
+      {% if c.sessions %}<ul class="list">{% for s in c.sessions[:12] %}{% set sm = s.summary() %}
+        <li><div><a href="{{ url_for('main.session_view', sid=s.id) }}"><b>{{ s.date.strftime('%a %d %b') }}</b></a> <span class="muted small">{{ s.started_at.strftime('%H:%M') }}{% if s.topic %} · {{ s.topic }}{% endif %}</span></div>
+        {% if s.is_open %}<span class="badge err"><span class="dot live"></span> Live</span>{% else %}<span class="badge">{{ sm.percent|round|int }}%</span>{% endif %}</li>{% endfor %}</ul>
+      {% else %}<div class="empty">No sessions yet.</div>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script>
+  const mode = document.getElementById('enroll-mode');
+  const sync = () => document.querySelectorAll('[data-for]').forEach((el) => el.hidden = el.dataset.for !== mode.value);
+  mode.addEventListener('change', sync); sync();
+</script>{% endblock %}

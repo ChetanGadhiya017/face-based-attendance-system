@@ -1,0 +1,8 @@
+{% extends "base.html" if current_user.is_authenticated else "bare.html" %}
+{% block title %}{{ code }}{% endblock %}
+{% block heading %}{{ 'Not allowed' if code == 403 else 'Page not found' }}{% endblock %}
+{% block content %}
+<div class="card empty"><div class="big">{{ '🔒' if code == 403 else '🧭' }}</div>
+<p>{{ "You don't have permission to view this page." if code == 403 else "We couldn't find that page." }}</p>
+<a class="btn" href="{{ url_for('main.home') }}">Go home</a></div>
+{% endblock %}

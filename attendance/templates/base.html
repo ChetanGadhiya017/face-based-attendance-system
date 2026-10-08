@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}{% endblock %} · FaceAttend</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><circle cx='16' cy='13' r='6' fill='none' stroke='white' stroke-width='2.5'/><path d='M7 27c2-5 6-7 9-7s7 2 9 7' fill='none' stroke='white' stroke-width='2.5'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <script>try{const t=localStorage.getItem('fa-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=t}catch(e){}</script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+{% set ep = request.endpoint or '' %}
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><div class="logo">🙂</div><div>FaceAttend<small>Smart attendance</small></div></div>
+    <nav class="nav">
+      {% if current_user.role in ('admin', 'faculty') %}
+      <a href="{{ url_for('main.dashboard') }}" class="{{ 'active' if ep == 'main.dashboard' }}"><span class="ico">📊</span>Dashboard</a>
+      <a href="{{ url_for('main.courses') }}" class="{{ 'active' if ep.startswith('main.course') or ep.startswith('main.session') }}"><span class="ico">📚</span>Courses &amp; sessions</a>
+      <a href="{{ url_for('main.students') }}" class="{{ 'active' if ep.startswith('main.student') }}"><span class="ico">🎓</span>Students</a>
+      <a href="{{ url_for('main.reports') }}" class="{{ 'active' if ep.startswith('main.report') }}"><span class="ico">📈</span>Reports</a>
+      {% if current_user.role == 'admin' %}
+      <div class="nav-label">Admin</div>
+      <a href="{{ url_for('main.users') }}" class="{{ 'active' if ep.startswith('main.user') }}"><span class="ico">🔑</span>Users</a>
+      {% endif %}
+      {% else %}
+      <a href="{{ url_for('main.portal') }}" class="active"><span class="ico">🗓️</span>My attendance</a>
+      {% endif %}
+      <div class="nav-label">Account</div>
+      <a href="{{ url_for('auth.change_password') }}" class="{{ 'active' if ep == 'auth.change_password' }}"><span class="ico">🔒</span>Change password</a>
+      <a href="#" id="theme-toggle"><span class="ico">🌓</span>Toggle theme</a>
+    </nav>
+    <div class="me">
+      <div class="avatar">{{ current_user.initials }}</div>
+      <div class="who"><b>{{ current_user.name }}</b>{{ current_user.role|capitalize }}</div>
+      <form method="post" action="{{ url_for('auth.logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button title="Sign out" aria-label="Sign out">⎋</button></form>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div style="display:flex;gap:12px;align-items:center">
+        <button class="btn sm menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')" aria-label="Menu">☰</button>
+        <div><h1>{% block heading %}{% endblock %}</h1><div class="sub">{% block subheading %}{% endblock %}</div></div>
+      </div>
+      <div class="actions">{% block actions %}{% endblock %}</div>
+    </header>
+    <main class="content">{% block content %}{% endblock %}</main>
+  </div>
+</div>
+
+<div class="flash-stack" id="flashes">
+  {% for cat, msg in get_flashed_messages(with_categories=true) %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+</div>
+<script>
+  document.getElementById('theme-toggle').addEventListener('click', (e) => {
+    e.preventDefault();
+    const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = t;
+    try { localStorage.setItem('fa-theme', t); } catch (err) {}
+    window.dispatchEvent(new Event('themechange'));
+  });
+  setTimeout(() => document.querySelectorAll('.flash').forEach((f) => f.remove()), 6000);
+  window.csrf = document.querySelector('meta[name=csrf-token]').content;
+  window.toast = (msg, cat = 'info') => {
+    const d = document.createElement('div'); d.className = 'flash ' + cat; d.textContent = msg;
+    document.getElementById('flashes').appendChild(d); setTimeout(() => d.remove(), 4000);
+  };
+  document.querySelectorAll('form[data-confirm]').forEach((f) => f.addEventListener('submit', (e) => { if (!confirm(f.dataset.confirm)) e.preventDefault(); }));
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

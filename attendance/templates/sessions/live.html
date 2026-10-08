@@ -1,0 +1,42 @@
+{% extends "base.html" %}{% from "_macros.html" import csrf with context %}
+{% block title %}Live · {{ s.course.code }}{% endblock %}
+{% block heading %}<span class="dot live"></span> {{ s.course.code }} · {{ s.course.name }}{% endblock %}
+{% block subheading %}Started {{ s.started_at.strftime('%H:%M') }}{% if s.topic %} · {{ s.topic }}{% endif %} · arrivals after {{ config.LATE_AFTER_MINUTES }} min are marked late{% endblock %}
+{% block actions %}
+<a class="btn" href="{{ url_for('main.session_csv', sid=s.id) }}">⬇ CSV</a>
+<form class="inline" method="post" action="{{ url_for('main.session_close', sid=s.id) }}" data-confirm="Close the session? Everyone not marked yet will be recorded as absent.">{{ csrf() }}<button class="btn primary">■ Close session</button></form>
+{% endblock %}
+{% block content %}
+<div class="live">
+  <div>
+    <div class="cam">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas class="overlay" id="overlay"></canvas>
+      <div class="hud"><span id="hud-state">Camera off</span><span id="hud-fps"></span></div>
+      <div class="placeholder" id="placeholder">
+        <div>{% if models_ready %}<div style="font-size:2.5rem">📷</div><p>Point the camera at the classroom door or desk.<br>Recognised students are marked automatically.</p>
+        <button class="btn primary" id="start">Start camera</button>
+        {% else %}<div style="font-size:2.5rem">⚠️</div><p>Face models are not installed.<br>Run <span class="mono">flask --app wsgi download-models</span>, or mark students manually →</p>{% endif %}</div>
+      </div>
+    </div>
+    <div class="actions" style="margin-top:10px">
+      <button class="btn" id="stop" hidden>Pause camera</button>
+      <select id="camera-select" hidden style="width:auto"></select>
+      <span class="muted small" id="tip"></span>
+    </div>
+    <div class="card" style="margin-top:12px"><h3>Activity</h3><div class="feed" id="feed"><div class="muted">Waiting for the first check-in…</div></div></div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><h3 style="margin:0">Roster</h3><b id="pct">0%</b></div>
+    <div class="summary-bar" id="bar"></div>
+    <div class="small muted" id="counts"></div>
+    <input type="search" id="filter" placeholder="Find a student…" style="margin:10px 0">
+    <div class="roster" id="roster"></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>window.LIVE = { session: {{ s.id }}, models: {{ models_ready|tojson }} };</script>
+<script src="{{ url_for('static', filename='js/live.js') }}"></script>
+{% endblock %}

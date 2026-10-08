@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% from "_macros.html" import csrf with context %}
+{% block title %}{{ 'Edit' if c.id else 'New' }} course{% endblock %}
+{% block heading %}{{ 'Edit ' ~ c.code if c.id else 'New course' }}{% endblock %}
+{% block content %}
+<form method="post" class="card" style="max-width:760px">{{ csrf() }}
+  <div class="form-grid">
+    <label class="f">Course code<input name="code" value="{{ c.code or '' }}" required maxlength="20" placeholder="20CP208T"></label>
+    <label class="f">Course name<input name="name" value="{{ c.name or '' }}" required maxlength="120"></label>
+    <label class="f">Department<select name="department_id"><option value="">–</option>
+      {% for d in depts %}<option value="{{ d.id }}" {{ 'selected' if c.department_id == d.id }}>{{ d.code }} · {{ d.name }}</option>{% endfor %}</select></label>
+    <label class="f">Faculty<select name="faculty_id"><option value="">Unassigned</option>
+      {% for u in faculty %}<option value="{{ u.id }}" {{ 'selected' if c.faculty_id == u.id }}>{{ u.name }} ({{ u.role }})</option>{% endfor %}</select></label>
+  </div>
+  <div style="margin-top:18px;display:flex;gap:8px"><button class="btn primary">{{ 'Save' if c.id else 'Create course' }}</button>
+  <a class="btn ghost" href="{{ url_for('main.course_detail', cid=c.id) if c.id else url_for('main.courses') }}">Cancel</a></div>
+</form>
+{% endblock %}

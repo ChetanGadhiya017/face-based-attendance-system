@@ -1,0 +1,54 @@
+{% extends "base.html" %}{% from "_macros.html" import meter, status, csrf with context %}
+{% block title %}{{ st.name }}{% endblock %}
+{% block heading %}{{ st.name }}{% endblock %}
+{% block subheading %}<span class="mono">{{ st.roll_no }}</span> · {{ st.department.name if st.department else 'No department' }} · Year {{ st.year }}{% if st.division %} · {{ st.division }}{% endif %}{% endblock %}
+{% block actions %}{% if current_user.role == 'admin' %}
+<a class="btn" href="{{ url_for('main.student_edit', sid=st.id) }}">✎ Edit</a>
+<form class="inline" method="post" action="{{ url_for('main.student_delete', sid=st.id) }}" data-confirm="Delete {{ st.name }} and all their attendance records?">{{ csrf() }}<button class="btn danger">Delete</button></form>
+{% endif %}{% endblock %}
+{% block content %}
+<div class="grid g-main">
+  <div>
+    <div class="card">
+      <h3>Attendance by course</h3>
+      {% if stats %}<div class="table-wrap"><table><thead><tr><th>Course</th><th>Held</th><th>Attended</th><th>Late</th><th style="width:220px">Attendance</th></tr></thead><tbody>
+      {% for s in stats %}{% set c = courses[s.course_id] %}
+        <tr><td><a href="{{ url_for('main.course_detail', cid=c.id) }}"><b>{{ c.code }}</b></a> <span class="muted small">{{ c.name }}</span></td>
+        <td>{{ s.held }}</td><td>{{ s.attended }}</td><td>{{ s.late }}</td><td>{{ meter(s.percent) }}</td></tr>{% endfor %}
+      </tbody></table></div>
+      {% else %}<div class="empty">Not enrolled in any course.</div>{% endif %}
+    </div>
+    <div class="card">
+      <h3>Recent attendance</h3>
+      {% if recent %}<ul class="list">{% for r in recent %}
+        <li><div><b>{{ r.session.course.code }}</b> · {{ r.session.date.strftime('%a %d %b') }} <span class="muted small">{{ r.session.topic or '' }}</span></div>
+        <div class="nowrap">{{ status(r.status) }} <span class="muted small">{{ r.method }}{% if r.confidence %} · {{ '%.2f'|format(r.confidence) }}{% endif %}</span></div></li>{% endfor %}</ul>
+      {% else %}<div class="empty">No records yet.</div>{% endif %}
+    </div>
+  </div>
+
+  <div class="card" id="enroll">
+    <h3>Face enrolment</h3>
+    <p class="muted small" style="margin-top:0">Capture <b>3–5</b> photos: straight on, slightly left and right, with and without glasses. Only a 128-number face signature and a small thumbnail are stored.</p>
+    <div class="faces" id="faces">
+      {% for f in st.faces %}<div class="face" data-id="{{ f.id }}"><img src="{{ thumb(f) }}" alt="Face sample"><button title="Delete sample" data-del="{{ f.id }}">✕</button></div>{% endfor %}
+    </div>
+    <p class="small" id="face-count"><b>{{ st.faces|length }}</b> / {{ max_faces }} samples</p>
+    {% if not models_ready %}
+      <div class="flash error" style="animation:none">Face models are not installed yet. Run <span class="mono">flask --app wsgi download-models</span> on the server.</div>
+    {% else %}
+    <div class="enroll-cam" id="cam-box" hidden><video id="cam" autoplay playsinline muted></video><div class="guide"></div></div>
+    <div class="actions" style="margin-top:10px">
+      <button class="btn" id="cam-start">📷 Use camera</button>
+      <button class="btn primary" id="cam-snap" hidden>Capture</button>
+      <label class="btn">⇪ Upload photo<input type="file" id="upload" accept="image/*" multiple hidden></label>
+    </div>
+    <p class="small muted" id="enroll-msg"></p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>window.ENROLL = { student: {{ st.id }}, max: {{ max_faces }}, count: {{ st.faces|length }} };</script>
+<script src="{{ url_for('static', filename='js/enroll.js') }}"></script>
+{% endblock %}

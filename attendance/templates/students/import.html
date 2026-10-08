@@ -1,0 +1,10 @@
+{% extends "base.html" %}{% from "_macros.html" import csrf with context %}
+{% block title %}Import students{% endblock %}{% block heading %}Import students{% endblock %}
+{% block content %}
+<form method="post" enctype="multipart/form-data" class="card" style="max-width:640px;display:flex;flex-direction:column;gap:14px">{{ csrf() }}
+  <p class="muted" style="margin:0">Upload a CSV with the columns <span class="mono">roll_no, name, email, department, year, division</span>. Existing roll numbers are updated; new departments are created automatically.</p>
+  <a href="{{ url_for('main.student_template') }}">⬇ Download a template</a>
+  <input type="file" name="file" accept=".csv" required>
+  <div><button class="btn primary">Import</button></div>
+</form>
+{% endblock %}

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · FaceAttend</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <script>try{const t=localStorage.getItem('fa-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+<div class="auth">
+  <section class="hero">
+    <div class="brand" style="padding:0"><div class="logo">🙂</div><div>FaceAttend<small>Smart attendance</small></div></div>
+    <div>
+      <h1>Attendance that takes itself.</h1>
+      <ul>
+        <li>Students look at the camera and they're marked present in under a second</li>
+        <li>Late arrivals, manual corrections and auto-absent on close</li>
+        <li>Live dashboards, defaulter lists and CSV reports</li>
+        <li>Stores face embeddings only, never raw photos</li>
+      </ul>
+    </div>
+    <small style="color:#64748b">v{{ app_version }}</small>
+  </section>
+  <section class="panel">
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div><h1>Welcome back</h1><p class="muted">Sign in to continue</p></div>
+      {% for cat, msg in get_flashed_messages(with_categories=true) %}<div class="flash {{ cat }}" style="animation:none">{{ msg }}</div>{% endfor %}
+      <label class="f">Email<input type="email" name="email" autocomplete="username" required autofocus></label>
+      <label class="f">Password<input type="password" name="password" autocomplete="current-password" required></label>
+      <label class="small" style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="remember"> Keep me signed in</label>
+      <button class="btn primary">Sign in</button>
+      <div class="demo-box">Demo data? Run <code>flask --app wsgi seed-demo</code>, then use <b>admin@demo.local</b> / admin123, <b>faculty1@demo.local</b> / faculty123 or <b>student@demo.local</b> / student123.</div>
+    </form>
+  </section>
+</div>
+</body>
+</html>

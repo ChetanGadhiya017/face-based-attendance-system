@@ -1,0 +1,31 @@
+{% extends "base.html" %}{% from "_macros.html" import meter, person with context %}
+{% block title %}Reports{% endblock %}{% block heading %}Reports{% endblock %}
+{% block subheading %}{% if course %}{{ course.code }} · {{ course.name }}{% endif %}{% endblock %}
+{% block actions %}{% if course %}<a class="btn primary" href="{{ url_for('main.report_csv', cid=course.id) }}">⬇ Export full register (CSV)</a>{% endif %}{% endblock %}
+{% block content %}
+{% if not courses %}<div class="card empty"><div class="big">📈</div>No courses to report on yet.</div>{% else %}
+<form class="filters" method="get">
+  <select name="course" onchange="this.form.submit()">{% for c in courses %}<option value="{{ c.id }}" {{ 'selected' if course and c.id == course.id }}>{{ c.code }} · {{ c.name }}</option>{% endfor %}</select>
+  <select name="filter" onchange="this.form.submit()"><option value="">All students</option><option value="below" {{ 'selected' if request.args.get('filter') == 'below' }}>Below {{ min_percent }}% only</option></select>
+  <select name="sort" onchange="this.form.submit()"><option value="roll">Sort by roll no</option><option value="pct" {{ 'selected' if request.args.get('sort') == 'pct' }}>Lowest attendance first</option></select>
+</form>
+<div class="grid g-main">
+  <div class="table-wrap"><table>
+    <thead><tr><th>Student</th><th>Held</th><th>Attended</th><th>Late</th><th style="width:210px">Attendance</th><th>To reach {{ min_percent }}%</th></tr></thead>
+    <tbody>{% for r in rows %}
+      <tr><td>{{ person(r.student) }}</td><td>{{ r.held }}</td><td>{{ r.attended }}</td><td>{{ r.late }}</td><td>{{ meter(r.percent) }}</td>
+      <td class="small">{% if r.need is not none %}<span class="badge warn">attend next {{ r.need }}</span>{% elif r.percent is not none %}<span class="badge ok">on track</span>{% else %}–{% endif %}</td></tr>
+    {% else %}<tr><td colspan="6" class="empty">Nobody here 🎉</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <div class="card"><h3>Attendance per session</h3>
+    {% if chart.labels %}<div class="chart-box" style="height:320px"><canvas id="sessions"></canvas></div>{% else %}<div class="empty">No closed sessions yet.</div>{% endif %}
+    <p class="small muted">"To reach {{ min_percent }}%" is the number of consecutive sessions a student must attend to get back to the minimum.</p>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script>const chart = {{ chart|tojson }}; drawCharts(() => chart.labels.length && barChart('sessions', chart.labels, chart.values, {{ min_percent }}));</script>
+{% endblock %}
